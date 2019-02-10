@@ -1,0 +1,24 @@
+var duplicates = [];
+
+use Articles_Authors_Database_BACKUP;
+db.getCollection("new_authors_articles").aggregate([
+ 
+  { $group: { 
+    _id: { author_unique_id: "$author_unique_id"}, 
+    dups: { "$addToSet": "$_id" }, 
+    count: { "$sum": 1 } 
+  }}, 
+  { $match: { 
+    count: { "$gt": 1 }    
+  }}
+],
+{allowDiskUse: true}       )               /
+.forEach(function(doc) {
+    doc.dups.shift();     
+    doc.dups.forEach( function(dupId){ 
+        duplicates.push(dupId);   
+        }
+    )    
+})
+  
+db.getCollection("new_authors_articles").remove({_id:{$in:duplicates}}) 
